@@ -1,0 +1,21 @@
+services:
+  api:
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DEFAULT_PAGE_SIZE: ${DEFAULT_PAGE_SIZE:-50}
+    volumes:
+      - ./db:/app/db:ro
+    restart: unless-stopped
+
+  test:
+    profiles: ["test"]
+    build:
+      context: .
+      target: test
+    environment:
+      NODE_ENV: test

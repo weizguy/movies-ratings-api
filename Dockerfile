@@ -1,5 +1,5 @@
-# ---- base: shared so the native sqlite3 module matches the runtime OS ----
-FROM node:24-slim AS base
+# ---- base: shared so the native sqlite3 module matches the runtime OS (needs glibc >= 2.38) ----
+FROM node:24-trixie-slim AS base
 WORKDIR /app
 
 # ---- deps: all dependencies, for building and testing ----

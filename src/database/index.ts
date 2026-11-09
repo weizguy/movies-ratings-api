@@ -1,10 +1,17 @@
 import { Sequelize } from 'sequelize';
 import sqlite3 from 'sqlite3';
-import { initMovieModel } from '../movies/movie.model';
-import { initRatingModel } from '../ratings/rating.model';
+import { initMovieModel, type MovieModel } from '../movies/movie.model';
+import { initRatingModel, type RatingModel } from '../ratings/rating.model';
 import type { Config } from '../config';
 
-function createSqlite(storage: string) {
+export interface Databases {
+  moviesDb: Sequelize;
+  ratingsDb: Sequelize;
+  Movie: typeof MovieModel;
+  Rating: typeof RatingModel;
+}
+
+function createSqlite(storage: string): Sequelize {
   return new Sequelize({
     dialect: 'sqlite',
     storage,
@@ -13,7 +20,7 @@ function createSqlite(storage: string) {
   });
 }
 
-export async function initDatabases(config: Config) {
+export async function initDatabases(config: Config): Promise<Databases> {
   const moviesDb = createSqlite(config.moviesDbPath);
   const ratingsDb = createSqlite(config.ratingsDbPath);
 
