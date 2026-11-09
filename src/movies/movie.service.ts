@@ -3,7 +3,7 @@ import { toPaginated, type Paginated } from '../common/pagination';
 import type { RatingRepository } from '../ratings/rating.repository';
 import { toMovieDetails, toMovieSummary } from './movie.mapper';
 import type { MovieRepository } from './movie.repository';
-import type { MovieDetails, MovieSummary } from './movie.types';
+import type { MovieDetails, MovieSummary, SortOrder } from './movie.types';
 
 const roundToTwoDecimals = (value: number): number => Math.round(value * 100) / 100;
 
@@ -17,6 +17,13 @@ export class MovieService {
   async list(page: number): Promise<Paginated<MovieSummary>> {
     const request = { page, pageSize: this.pageSize };
     const { rows, total } = await this.movies.findPage(request);
+
+    return toPaginated(rows.map(toMovieSummary), total, request);
+  }
+
+  async listByYear(year: number, sort: SortOrder, page: number): Promise<Paginated<MovieSummary>> {
+    const request = { page, pageSize: this.pageSize };
+    const { rows, total } = await this.movies.findPageByYear(year, sort, request);
 
     return toPaginated(rows.map(toMovieSummary), total, request);
   }

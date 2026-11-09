@@ -26,6 +26,10 @@ describe('MovieService', () => {
     ReturnType<MovieRepository['findPage']>,
     Parameters<MovieRepository['findPage']>
   >();
+  const findPageByYear = jest.fn<
+    ReturnType<MovieRepository['findPageByYear']>,
+    Parameters<MovieRepository['findPageByYear']>
+  >();
   const findByImdbId = jest.fn<
     ReturnType<MovieRepository['findByImdbId']>,
     Parameters<MovieRepository['findByImdbId']>
@@ -34,10 +38,15 @@ describe('MovieService', () => {
     ReturnType<RatingRepository['averageForMovie']>,
     Parameters<RatingRepository['averageForMovie']>
   >();
-  const service = new MovieService({ findPage, findByImdbId }, { averageForMovie }, 20);
+  const service = new MovieService(
+    { findPage, findPageByYear, findByImdbId },
+    { averageForMovie },
+    20,
+  );
 
   beforeEach(() => {
     findPage.mockReset();
+    findPageByYear.mockReset();
     findByImdbId.mockReset();
     averageForMovie.mockReset();
   });
@@ -77,6 +86,44 @@ describe('MovieService', () => {
       findPage.mockRejectedValue(new Error('db down'));
 
       await expect(service.list(1)).rejects.toThrow('db down');
+    });
+  });
+
+  describe('listByYear', () => {
+    it('passes the year, sort and configured page size to the repository', async () => {
+      findPageByYear.mockResolvedValue({ rows: [], total: 0 });
+
+      await service.listByYear(1995, 'desc', 2);
+
+      expect(findPageByYear).toHaveBeenCalledWith(1995, 'desc', { page: 2, pageSize: 20 });
+    });
+
+    it('maps rows and wraps them with pagination metadata', async () => {
+      findPageByYear.mockResolvedValue({ rows: [listRow], total: 21 });
+
+      const result = await service.listByYear(1988, 'asc', 1);
+
+      expect(result).toEqual({
+        data: [
+          { imdbId: 'tt0094675', title: 'Ariel', genres: ['Drama'], releaseDate: '1988-10-21', budget: null },
+        ],
+        page: 1,
+        pageSize: 20,
+        total: 21,
+        totalPages: 2,
+      });
+    });
+
+    it('returns an empty page for a year with no movies', async () => {
+      findPageByYear.mockResolvedValue({ rows: [], total: 0 });
+
+      expect(await service.listByYear(1800, 'asc', 1)).toEqual({
+        data: [],
+        page: 1,
+        pageSize: 20,
+        total: 0,
+        totalPages: 0,
+      });
     });
   });
 

@@ -1,3 +1,5 @@
+export type SortOrder = 'asc' | 'desc';
+
 export interface MovieSummary {
   imdbId: string;
   title: string;
