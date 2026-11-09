@@ -3,6 +3,7 @@ import { validate } from '../common/middleware/validate';
 import type { MovieController } from './movie.controller';
 import {
   detailsParamsSchema,
+  genreParamsSchema,
   listQuerySchema,
   yearParamsSchema,
   yearQuerySchema,
@@ -18,6 +19,13 @@ export function createMovieRouter(controller: MovieController): Router {
     validate('params', yearParamsSchema),
     validate('query', yearQuerySchema),
     controller.listByYear,
+  );
+
+  router.get(
+    '/genre/:genre',
+    validate('params', genreParamsSchema),
+    validate('query', listQuerySchema),
+    controller.listByGenre,
   );
 
   // Must stay last: '/:imdbId' would otherwise swallow '/year/...' and '/genre/...'.

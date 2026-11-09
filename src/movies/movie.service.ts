@@ -28,6 +28,13 @@ export class MovieService {
     return toPaginated(rows.map(toMovieSummary), total, request);
   }
 
+  async listByGenre(genre: string, page: number): Promise<Paginated<MovieSummary>> {
+    const request = { page, pageSize: this.pageSize };
+    const { rows, total } = await this.movies.findPageByGenre(genre, request);
+
+    return toPaginated(rows.map(toMovieSummary), total, request);
+  }
+
   // The two tables live in separate databases, so the rating lookup is a
   // second query keyed by the movie's movieId rather than a join.
   async getByImdbId(imdbId: string): Promise<MovieDetails> {

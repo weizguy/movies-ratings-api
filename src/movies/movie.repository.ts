@@ -1,4 +1,4 @@
-import { Op, type InferAttributes, type Order, type WhereOptions } from 'sequelize';
+import { literal, Op, type InferAttributes, type Order, type WhereOptions } from 'sequelize';
 import type { MovieModel } from './movie.model';
 import type { MovieDetailsRow, MovieListRow, SortOrder } from './movie.types';
 import { offsetFor, type PageRequest } from '../common/pagination';
@@ -11,6 +11,7 @@ export interface MovieListPage {
 export interface MovieRepository {
   findPage(request: PageRequest): Promise<MovieListPage>;
   findPageByYear(year: number, sort: SortOrder, request: PageRequest): Promise<MovieListPage>;
+  findPageByGenre(genre: string, request: PageRequest): Promise<MovieListPage>;
   findByImdbId(imdbId: string): Promise<MovieDetailsRow | null>;
 }
 
@@ -19,9 +20,16 @@ const LIST_COLUMNS = ['imdbId', 'title', 'genres', 'releaseDate', 'budget'] as c
 // Whitelist lookup: user input selects a direction, it is never interpolated.
 const DIRECTION = { asc: 'ASC', desc: 'DESC' } as const;
 
+// genres holds JSON text: [{"id": 18, "name": "Drama"}, ...]. The genre is
+// always bound through :genre, never interpolated into the SQL.
+const HAS_GENRE = literal(
+  "EXISTS (SELECT 1 FROM json_each(Movie.genres) WHERE lower(json_extract(value, '$.name')) = :genre)",
+);
+
 interface PageQuery {
   where?: WhereOptions<InferAttributes<MovieModel>>;
   order: Order;
+  replacements?: Record<string, string>;
 }
 
 export class SequelizeMovieRepository implements MovieRepository {
@@ -48,6 +56,15 @@ export class SequelizeMovieRepository implements MovieRepository {
     });
   }
 
+  // Expects an already-normalized (trimmed, lower-case) genre name.
+  findPageByGenre(genre: string, request: PageRequest): Promise<MovieListPage> {
+    return this.queryPage(request, {
+      where: HAS_GENRE,
+      order: [['movieId', 'ASC']],
+      replacements: { genre },
+    });
+  }
+
   findByImdbId(imdbId: string): Promise<MovieDetailsRow | null> {
     return this.Movie.findOne({
       attributes: [
@@ -67,20 +84,21 @@ export class SequelizeMovieRepository implements MovieRepository {
     });
   }
 
-  private async queryPage(request: PageRequest, { where, order }: PageQuery): Promise<MovieListPage> {
-    const [rows, total] = await Promise.all([
-      this.Movie.findAll({
-        attributes: [...LIST_COLUMNS],
-        where,
-        order,
-        limit: request.pageSize,
-        offset: offsetFor(request),
-        raw: true,
-      }),
-      this.Movie.count({ where }),
-    ]);
+  private async queryPage(
+    request: PageRequest,
+    { where, order, replacements }: PageQuery,
+  ): Promise<MovieListPage> {
+    const { rows, count } = await this.Movie.findAndCountAll({
+      attributes: [...LIST_COLUMNS],
+      where,
+      order,
+      limit: request.pageSize,
+      offset: offsetFor(request),
+      replacements,
+      raw: true,
+    });
 
-    return { rows, total };
+    return { rows, total: count };
   }
 }
 

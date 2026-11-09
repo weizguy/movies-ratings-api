@@ -29,7 +29,12 @@ describe('GET /health', () => {
       logger: pino({ level: 'silent' }),
       movieController: new MovieController(
         new MovieService(
-          { findPage: jest.fn(), findPageByYear: jest.fn(), findByImdbId: jest.fn() },
+          {
+            findPage: jest.fn(),
+            findPageByYear: jest.fn(),
+            findPageByGenre: jest.fn(),
+            findByImdbId: jest.fn(),
+          },
           { averageForMovie: jest.fn() },
           1,
         ),

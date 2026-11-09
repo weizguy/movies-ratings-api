@@ -30,6 +30,10 @@ describe('MovieService', () => {
     ReturnType<MovieRepository['findPageByYear']>,
     Parameters<MovieRepository['findPageByYear']>
   >();
+  const findPageByGenre = jest.fn<
+    ReturnType<MovieRepository['findPageByGenre']>,
+    Parameters<MovieRepository['findPageByGenre']>
+  >();
   const findByImdbId = jest.fn<
     ReturnType<MovieRepository['findByImdbId']>,
     Parameters<MovieRepository['findByImdbId']>
@@ -39,7 +43,7 @@ describe('MovieService', () => {
     Parameters<RatingRepository['averageForMovie']>
   >();
   const service = new MovieService(
-    { findPage, findPageByYear, findByImdbId },
+    { findPage, findPageByYear, findPageByGenre, findByImdbId },
     { averageForMovie },
     20,
   );
@@ -47,6 +51,7 @@ describe('MovieService', () => {
   beforeEach(() => {
     findPage.mockReset();
     findPageByYear.mockReset();
+    findPageByGenre.mockReset();
     findByImdbId.mockReset();
     averageForMovie.mockReset();
   });
@@ -118,6 +123,44 @@ describe('MovieService', () => {
       findPageByYear.mockResolvedValue({ rows: [], total: 0 });
 
       expect(await service.listByYear(1800, 'asc', 1)).toEqual({
+        data: [],
+        page: 1,
+        pageSize: 20,
+        total: 0,
+        totalPages: 0,
+      });
+    });
+  });
+
+  describe('listByGenre', () => {
+    it('passes the genre and configured page size to the repository', async () => {
+      findPageByGenre.mockResolvedValue({ rows: [], total: 0 });
+
+      await service.listByGenre('science fiction', 3);
+
+      expect(findPageByGenre).toHaveBeenCalledWith('science fiction', { page: 3, pageSize: 20 });
+    });
+
+    it('maps rows and wraps them with pagination metadata', async () => {
+      findPageByGenre.mockResolvedValue({ rows: [listRow], total: 45 });
+
+      const result = await service.listByGenre('drama', 1);
+
+      expect(result).toEqual({
+        data: [
+          { imdbId: 'tt0094675', title: 'Ariel', genres: ['Drama'], releaseDate: '1988-10-21', budget: null },
+        ],
+        page: 1,
+        pageSize: 20,
+        total: 45,
+        totalPages: 3,
+      });
+    });
+
+    it('returns an empty page for a genre with no movies', async () => {
+      findPageByGenre.mockResolvedValue({ rows: [], total: 0 });
+
+      expect(await service.listByGenre('klingon', 1)).toEqual({
         data: [],
         page: 1,
         pageSize: 20,
