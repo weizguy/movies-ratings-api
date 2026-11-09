@@ -12,7 +12,7 @@
     "test": "jest",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down",
-    "docker:test": "docker compose --profile test run --rm test"
+    "docker:test": "docker compose --profile test run --build --rm test"
   },
   "license": "ISC",
   "type": "commonjs",
