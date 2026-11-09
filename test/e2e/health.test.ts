@@ -27,7 +27,13 @@ describe('GET /health', () => {
   it('returns 503 when a database check fails', async () => {
     const app = createApp({
       logger: pino({ level: 'silent' }),
-      movieController: new MovieController(new MovieService({ findPage: jest.fn() }, 1)),
+      movieController: new MovieController(
+        new MovieService(
+          { findPage: jest.fn(), findByImdbId: jest.fn() },
+          { averageForMovie: jest.fn() },
+          1,
+        ),
+      ),
       healthCheck: () => Promise.reject(new Error('db down')),
     });
 

@@ -1,5 +1,5 @@
 import type { MovieModel } from './movie.model';
-import type { MovieListRow } from './movie.types';
+import type { MovieDetailsRow, MovieListRow } from './movie.types';
 import { offsetFor, type PageRequest } from '../common/pagination';
 
 export interface MovieListPage {
@@ -9,6 +9,7 @@ export interface MovieListPage {
 
 export interface MovieRepository {
   findPage(request: PageRequest): Promise<MovieListPage>;
+  findByImdbId(imdbId: string): Promise<MovieDetailsRow | null>;
 }
 
 export class SequelizeMovieRepository implements MovieRepository {
@@ -27,5 +28,24 @@ export class SequelizeMovieRepository implements MovieRepository {
     ]);
 
     return { rows, total };
+  }
+
+  findByImdbId(imdbId: string): Promise<MovieDetailsRow | null> {
+    return this.Movie.findOne({
+      attributes: [
+        'movieId',
+        'imdbId',
+        'title',
+        'genres',
+        'releaseDate',
+        'budget',
+        'overview',
+        'runtime',
+        'language',
+        'productionCompanies',
+      ],
+      where: { imdbId },
+      raw: true,
+    });
   }
 }

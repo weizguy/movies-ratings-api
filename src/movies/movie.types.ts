@@ -22,3 +22,12 @@ export interface MovieListRow {
   releaseDate: string | null;
   budget: number | null;
 }
+
+// Columns the details endpoint reads from the movies table, as stored.
+export interface MovieDetailsRow extends MovieListRow {
+  movieId: number;
+  overview: string | null;
+  runtime: number | null;
+  language: string | null;
+  productionCompanies: string | null; // JSON text
+}

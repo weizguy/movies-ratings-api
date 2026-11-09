@@ -6,6 +6,7 @@ import { initDatabases } from './database';
 import { MovieController } from './movies/movie.controller';
 import { SequelizeMovieRepository } from './movies/movie.repository';
 import { MovieService } from './movies/movie.service';
+import { SequelizeRatingRepository } from './ratings/rating.repository';
 
 export interface Container {
   app: Express;
@@ -15,9 +16,13 @@ export interface Container {
 
 export async function buildContainer(config: Config): Promise<Container> {
   const logger = pino({ level: config.logLevel });
-  const { moviesDb, ratingsDb, Movie } = await initDatabases(config);
+  const { moviesDb, ratingsDb, Movie, Rating } = await initDatabases(config);
 
-  const movieService = new MovieService(new SequelizeMovieRepository(Movie), config.defaultPageSize);
+  const movieService = new MovieService(
+    new SequelizeMovieRepository(Movie),
+    new SequelizeRatingRepository(Rating),
+    config.defaultPageSize,
+  );
 
   const app = createApp({
     logger,
