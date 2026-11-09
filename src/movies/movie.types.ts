@@ -13,3 +13,12 @@ export interface MovieDetails extends MovieSummary {
   originalLanguage: string | null;
   productionCompanies: string[];
 }
+
+// Columns the list endpoints read from the movies table, as stored.
+export interface MovieListRow {
+  imdbId: string;
+  title: string;
+  genres: string | null; // JSON text
+  releaseDate: string | null;
+  budget: number | null;
+}

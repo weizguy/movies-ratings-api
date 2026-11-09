@@ -3,10 +3,13 @@ import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import type { Logger } from 'pino';
 import { NotFoundError } from './common/errors';
+import type { MovieController } from './movies/movie.controller';
+import { createMovieRouter } from './movies/movie.routes';
 import { createErrorHandler } from './common/middleware/error-handler';
 
 export interface AppDependencies {
   logger: Logger;
+  movieController: MovieController;
   healthCheck: () => Promise<void>;
 }
 
@@ -25,6 +28,8 @@ export function createApp(deps: AppDependencies): Express {
       res.status(503).json({ status: 'unavailable' });
     }
   });
+
+  app.use('/movies', createMovieRouter(deps.movieController));
 
   app.use((req, _res, next) => {
     next(new NotFoundError(`Route ${req.method} ${req.path} not found`));
